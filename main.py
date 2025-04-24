@@ -1,0 +1,119 @@
+import requests
+from datetime import date
+from langchain.chat_models import ChatGooglePalm
+from langchain.prompts import PromptTemplate
+from langchain.chains import LLMChain
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+import os
+from dotenv import load_dotenv
+from moviepy.editor import TextClip, concatenate_videoclips
+
+load_dotenv()  # Load environment variables from .env file
+
+class LeetCodeVideoGenerator:
+    def __init__(self):
+        gemini_api_key = os.getenv("GEMINI_API_KEY")
+        youtube_api_key = os.getenv("YOUTUBE_API_KEY")
+        if not gemini_api_key or not youtube_api_key:
+            raise ValueError("API keys not found in environment variables.")
+
+        self.llm = ChatGooglePalm(google_api_key=gemini_api_key, temperature=0.7)
+        self.youtube_api_key = youtube_api_key
+        self.leetcode_endpoint = "https://leetcode.com/graphql"
+
+    def fetch_easy_problems(self):
+        query = """
+        query {
+          problemsetQuestionList(
+            categorySlug: "",
+            filters: { difficulty: "EASY" },
+            limit: 1000,
+            skip: 0
+          ) {
+            questions {
+              title
+              titleSlug
+              frontendQuestionId
+            }
+          }
+        }
+        """
+        headers = {
+            "Content-Type": "application/json",
+        }
+        response = requests.post(self.leetcode_endpoint, json={'query': query}, headers=headers)
+        data = response.json()
+        return data['data']['problemsetQuestionList']['questions']
+
+    def get_today_problem(self, problems):
+        today = date(2025, 4, 23)
+        index = (today - date(2025, 1, 1)).days % len(problems)
+        return problems[index]
+
+    def generate_script(self, title, description):
+        prompt = PromptTemplate(
+            input_variables=["title", "description"],
+            template="""
+            Create a concise, engaging 1-minute YouTube Shorts script for the LeetCode problem titled "{title}". 
+            Begin with a hook, explain the problem briefly, outline the optimal approach, and conclude with a call-to-action.
+            Problem Description: {description}
+            """
+        )
+        chain = LLMChain(llm=self.llm, prompt=prompt)
+        return chain.run(title=title, description=description)
+
+    def generate_video(self, script, output_path="short_video.mp4"):
+        lines = script.split("\n")
+        clips = []
+        for line in lines:
+            if line.strip():
+                clip = TextClip(line, fontsize=50, color='white', size=(720, 1280), method='caption', bg_color='black', duration=2)
+                clips.append(clip)
+
+        final_video = concatenate_videoclips(clips, method="compose")
+        final_video.write_videofile(output_path, fps=24)
+        return output_path
+
+    def upload_to_youtube(self, video_path, title):
+        youtube = build('youtube', 'v3', developerKey=self.youtube_api_key)
+
+        request = youtube.videos().insert(
+            part="snippet,status",
+            body={
+                "snippet": {
+                    "title": title,
+                    "description": f"Quick 1-minute guide to solving {title} on LeetCode. Subscribe for more coding tips!",
+                    "tags": ["LeetCode", "coding interview", "shorts", "python", "algorithms"],
+                    "categoryId": "27"
+                },
+                "status": {
+                    "privacyStatus": "public",
+                    "madeForKids": False
+                }
+            },
+            media_body=MediaFileUpload(video_path)
+        )
+        response = request.execute()
+        return f"https://youtube.com/watch?v={response['id']}"
+
+    def run(self):
+        print("[INFO] Fetching LeetCode problems...")
+        problems = self.fetch_easy_problems()
+        problem = self.get_today_problem(problems)
+        print(f"[INFO] Selected Problem: {problem['title']}")
+
+        description = f"Problem ID {problem['frontendQuestionId']} - {problem['title']}. Find two numbers in an array that add up to a target."
+        print("[INFO] Generating video script...")
+        script = self.generate_script(problem['title'], description)
+
+        print("[INFO] Creating video...")
+        video_path = self.generate_video(script)
+
+        print("[INFO] Uploading video to YouTube...")
+        youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
+        print(f"[SUCCESS] Video uploaded: {youtube_url}")
+
+# Example usage:
+# generator = LeetCodeVideoGenerator()
+# generator.run()
