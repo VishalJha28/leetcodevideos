@@ -1,5 +1,6 @@
 requests
 langchain
+langchain-community
 google-api-python-client
 python-dotenv
 moviepy
