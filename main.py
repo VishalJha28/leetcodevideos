@@ -1,6 +1,6 @@
 import requests
 from datetime import date
-from langchain.chat_models import ChatGooglePalm
+from langchain_community.chat_models import ChatGooglePalm
 from langchain.prompts import PromptTemplate
 from langchain.chains import LLMChain
 from googleapiclient.discovery import build
@@ -8,6 +8,7 @@ from googleapiclient.http import MediaFileUpload
 import os
 from dotenv import load_dotenv
 from moviepy.editor import TextClip, concatenate_videoclips
+import subprocess
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -63,7 +64,15 @@ class LeetCodeVideoGenerator:
         chain = LLMChain(llm=self.llm, prompt=prompt)
         return chain.run(title=title, description=description)
 
+    def check_imagemagick(self):
+        try:
+            subprocess.run(["convert", "-version"], check=True, stdout=subprocess.DEVNULL)
+            print("[INFO] ImageMagick is installed.")
+        except Exception as e:
+            raise EnvironmentError("ImageMagick is not installed or not accessible. Please install ImageMagick to proceed.")
+
     def generate_video(self, script, output_path="short_video.mp4"):
+        self.check_imagemagick()
         lines = script.split("\n")
         clips = []
         for line in lines:
@@ -110,9 +119,9 @@ class LeetCodeVideoGenerator:
         print("[INFO] Creating video...")
         video_path = self.generate_video(script)
 
-        print("[INFO] Uploading video to YouTube...")
-        youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
-        print(f"[SUCCESS] Video uploaded: {youtube_url}")
+        # print("[INFO] Uploading video to YouTube...")
+        # youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
+        # print(f"[SUCCESS] Video uploaded: {youtube_url}")
 
 # Example usage:
 # generator = LeetCodeVideoGenerator()
