@@ -4,5 +4,6 @@ langchain-community
 google-api-python-client
 python-dotenv
 moviepy
+imageio
 Pillow
-
+decorator
