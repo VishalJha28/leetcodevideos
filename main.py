@@ -19,6 +19,8 @@ class LeetCodeVideoGenerator:
         youtube_api_key = os.getenv("YOUTUBE_API_KEY")
         if google_api_key:
             print("google api received")
+        else:
+            print("api key for google not found")
         if youtube_api_key:
             print("youtube api received")
 
