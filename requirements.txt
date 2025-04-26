@@ -2,6 +2,7 @@ requests
 langchain
 langchain-community
 google-api-python-client
+google-generativeai
 python-dotenv
 Pillow
 ffmpeg-python
