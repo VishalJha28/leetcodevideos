@@ -124,5 +124,5 @@ class LeetCodeVideoGenerator:
         # print(f"[SUCCESS] Video uploaded: {youtube_url}")
 
 # Example usage:
-# generator = LeetCodeVideoGenerator()
-# generator.run()
+generator = LeetCodeVideoGenerator()
+generator.run()
