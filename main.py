@@ -7,8 +7,9 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import os
 from dotenv import load_dotenv
-from moviepy.editor import TextClip, concatenate_videoclips
-import subprocess
+from PIL import Image, ImageDraw, ImageFont
+import ffmpeg
+import tempfile
 
 load_dotenv()  # Load environment variables from .env file
 
@@ -64,24 +65,29 @@ class LeetCodeVideoGenerator:
         chain = LLMChain(llm=self.llm, prompt=prompt)
         return chain.run(title=title, description=description)
 
-    def check_imagemagick(self):
-        try:
-            subprocess.run(["convert", "-version"], check=True, stdout=subprocess.DEVNULL)
-            print("[INFO] ImageMagick is installed.")
-        except Exception as e:
-            raise EnvironmentError("ImageMagick is not installed or not accessible. Please install ImageMagick to proceed.")
-
     def generate_video(self, script, output_path="short_video.mp4"):
-        self.check_imagemagick()
-        lines = script.split("\n")
-        clips = []
-        for line in lines:
-            if line.strip():
-                clip = TextClip(line, fontsize=50, color='white', size=(720, 1280), method='caption', bg_color='black', duration=2)
-                clips.append(clip)
+        lines = [line.strip() for line in script.split("\n") if line.strip()]
+        temp_dir = tempfile.mkdtemp()
+        image_paths = []
 
-        final_video = concatenate_videoclips(clips, method="compose")
-        final_video.write_videofile(output_path, fps=24)
+        font = ImageFont.truetype("DejaVuSans-Bold.ttf", 48)
+
+        for idx, line in enumerate(lines):
+            img = Image.new('RGB', (720, 1280), color='black')
+            draw = ImageDraw.Draw(img)
+            w, h = draw.textsize(line, font=font)
+            draw.text(((720 - w) / 2, (1280 - h) / 2), line, fill="white", font=font)
+            img_path = os.path.join(temp_dir, f"frame_{idx:03d}.png")
+            img.save(img_path)
+            image_paths.append(img_path)
+
+        (
+            ffmpeg
+            .input(f'{temp_dir}/frame_%03d.png', framerate=1)
+            .output(output_path, vcodec='libx264', pix_fmt='yuv420p', vf='scale=720:1280', crf=23, preset='ultrafast')
+            .run()
+        )
+
         return output_path
 
     def upload_to_youtube(self, video_path, title):
@@ -119,9 +125,9 @@ class LeetCodeVideoGenerator:
         print("[INFO] Creating video...")
         video_path = self.generate_video(script)
 
-        # print("[INFO] Uploading video to YouTube...")
-        # youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
-        # print(f"[SUCCESS] Video uploaded: {youtube_url}")
+        print("[INFO] Uploading video to YouTube...")
+        youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
+        print(f"[SUCCESS] Video uploaded: {youtube_url}")
 
 # Example usage:
 generator = LeetCodeVideoGenerator()
