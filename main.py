@@ -17,8 +17,10 @@ class LeetCodeVideoGenerator:
     def __init__(self):
         google_api_key = os.getenv("GOOGLE_API_KEY")
         youtube_api_key = os.getenv("YOUTUBE_API_KEY")
-        # if not gemini_api_key or not youtube_api_key:
-        #     raise ValueError("API keys not found in environment variables.")
+        if google_api_key::
+            print("google api received")
+        if youtube_api_key:
+            print("youtube api received")
 
         self.llm = ChatGooglePalm(google_api_key=google_api_key, temperature=0.7)
         self.youtube_api_key = youtube_api_key
