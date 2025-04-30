@@ -72,7 +72,7 @@ class LeetCodeVideoGenerator:
               Problem Description: {description}
               """.format(title=title, description=description)),
         ]
-        ai_msg = llm.invoke(messages)
+        ai_msg = self.llm.invoke(messages)
         return ai_msg.content
 
     def generate_video(self, script, output_path="short_video.mp4"):
