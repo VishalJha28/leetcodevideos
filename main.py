@@ -121,7 +121,7 @@ class LeetCodeVideoGenerator:
         problem = self.get_today_problem(problems)
         print(f"[INFO] Selected Problem: {problem['title']}")
 
-        description = f"Problem ID {problem['frontendQuestionId']} - {problem['title']}. Find two numbers in an array that add up to a target."
+        description = f"Problem ID {problem['questionFrontendId']} - {problem['title']}"
         print("[INFO] Generating video script...")
         script = self.generate_script(problem['title'], description)
 
