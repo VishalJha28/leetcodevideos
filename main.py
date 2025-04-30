@@ -65,8 +65,8 @@ class LeetCodeVideoGenerator:
             Problem Description: {description}
             """
         )
-        chain = LLMChain(llm=self.llm, prompt=prompt)
-        return chain.run(title=title, description=description)
+        chain = prompt | self.llm
+        return chain.invoke({"title": title, "description": description})
 
     def generate_video(self, script, output_path="short_video.mp4"):
         lines = [line.strip() for line in script.split("\n") if line.strip()]
