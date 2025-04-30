@@ -1,8 +1,6 @@
 import requests
 from datetime import date
-from langchain_community.chat_models import ChatGooglePalm
-from langchain.prompts import PromptTemplate
-from langchain.chains import LLMChain
+from langchain_google_genai import ChatGoogleGenerativeAI
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 import os
@@ -24,7 +22,13 @@ class LeetCodeVideoGenerator:
         if youtube_api_key:
             print("youtube api received")
 
-        self.llm = ChatGooglePalm(google_api_key=google_api_key, temperature=0.7)
+        self.llm = ChatGoogleGenerativeAI(
+            model="gemini-2.0-flash",
+            temperature=0.4,
+            max_tokens=None,
+            timeout=None,
+            max_retries=2,
+        )
         self.youtube_api_key = youtube_api_key
         self.leetcode_endpoint = "https://leetcode.com/graphql"
 
@@ -57,16 +61,19 @@ class LeetCodeVideoGenerator:
         return problems[index]
 
     def generate_script(self, title, description):
-        prompt = PromptTemplate(
-            input_variables=["title", "description"],
-            template="""
-            Create a concise, engaging 1-minute YouTube Shorts script for the LeetCode problem titled "{title}". 
-            Begin with a hook, explain the problem briefly, outline the optimal approach, and conclude with a call-to-action.
-            Problem Description: {description}
-            """
-        )
-        chain = prompt | self.llm
-        return chain.invoke({"title": title, "description": description})
+        messages = [
+            (
+                "system",
+                "You are an expert at Data Structures and Algorithms and can explain your thought process in easy to understand terms with entertaining examples and parallelisms here and there. Don't overdo it though",
+            ),
+            ("human","""
+              Create a concise, engaging 1-minute YouTube Shorts script for the LeetCode problem titled "{title}". 
+              Begin with a hook, explain the problem briefly, outline the optimal approach, and conclude with a call-to-action.
+              Problem Description: {description}
+              """.format(title=problem["title"], description=description)),
+        ]
+        ai_msg = llm.invoke(messages)
+        return ai_msg.content
 
     def generate_video(self, script, output_path="short_video.mp4"):
         lines = [line.strip() for line in script.split("\n") if line.strip()]
