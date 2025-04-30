@@ -30,27 +30,26 @@ class LeetCodeVideoGenerator:
 
     def fetch_easy_problems(self):
         query = """
-        query {
-          problemsetQuestionList(
-            categorySlug: "",
-            filters: { difficulty: "EASY" },
-            limit: 1000,
-            skip: 0
-          ) {
-            questions {
-              title
-              titleSlug
-              frontendQuestionId
+            query {
+              problemsetQuestionListV2(
+                categorySlug: "",
+                limit: 1000,
+                skip: 0
+              ) {
+                questions {
+                  title
+                  titleSlug
+                  questionFrontendId
+                }
+              }
             }
-          }
-        }
         """
         headers = {
             "Content-Type": "application/json",
         }
         response = requests.post(self.leetcode_endpoint, json={'query': query}, headers=headers)
         data = response.json()
-        return data['data']['problemsetQuestionList']['questions']
+        return data['data']['problemsetQuestionListV2']['questions']
 
     def get_today_problem(self, problems):
         today = date(2025, 4, 23)
