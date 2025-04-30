@@ -1,5 +1,5 @@
 import requests
-from datetime import date
+from datetime import date, datetime
 from langchain_google_genai import ChatGoogleGenerativeAI
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
@@ -56,8 +56,8 @@ class LeetCodeVideoGenerator:
         return data['data']['problemsetQuestionListV2']['questions']
 
     def get_today_problem(self, problems):
-        today = date(2025, 4, 23)
-        index = (today - date(2025, 1, 1)).days % len(problems)
+        today = datetime.now().date()
+        index = (today - date(2025, 4, 30)).days % len(problems)
         return problems[index]
 
     def generate_script(self, title, description):
@@ -70,7 +70,7 @@ class LeetCodeVideoGenerator:
               Create a concise, engaging 1-minute YouTube Shorts script for the LeetCode problem titled "{title}". 
               Begin with a hook, explain the problem briefly, outline the optimal approach, and conclude with a call-to-action.
               Problem Description: {description}
-              """.format(title=problem["title"], description=description)),
+              """.format(title=title, description=description)),
         ]
         ai_msg = llm.invoke(messages)
         return ai_msg.content
