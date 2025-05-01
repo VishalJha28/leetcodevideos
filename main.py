@@ -100,6 +100,22 @@ class LeetCodeVideoGenerator:
 
         return output_path
 
+    def write_to_excel(self, date_str, title, description, script, link):
+        row = {
+            "Date": date_str,
+            "Title": title,
+            "Description": description,
+            "Script": script,
+            "Link": link
+        }
+        if os.path.exists(self.excel_path):
+            df = pd.read_excel(self.excel_path)
+            df = pd.concat([df, pd.DataFrame([row])], ignore_index=True)
+        else:
+            df = pd.DataFrame([row])
+        df.to_excel(self.excel_path, index=False)
+
+
     def upload_to_youtube(self, video_path, title):
         youtube = build('youtube', 'v3', developerKey=self.youtube_api_key)
 
@@ -132,12 +148,19 @@ class LeetCodeVideoGenerator:
         print("[INFO] Generating video script...")
         script = self.generate_script(problem['title'], description)
 
-        print("[INFO] Creating video...")
-        video_path = self.generate_video(script)
+        # print("[INFO] Creating video...")
+        # video_path = self.generate_video(script)
 
-        print("[INFO] Uploading video to YouTube...")
-        youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
-        print(f"[SUCCESS] Video uploaded: {youtube_url}")
+        # print("[INFO] Uploading video to YouTube...")
+        # youtube_url = self.upload_to_youtube(video_path, f"LeetCode Easy: {problem['title']}")
+        # print(f"[SUCCESS] Video uploaded: {youtube_url}")
+        
+        link = f"https://leetcode.com/problems/{problem['titleSlug']}/"
+        date_str = date.today().isoformat()
+        print("[INFO] Writing to Excel file...")
+        self.write_to_excel(date_str, problem['title'], description, script, link)
+        print(f"[SUCCESS] Entry written for {problem['title']}")
+
 
 # Example usage:
 generator = LeetCodeVideoGenerator()
