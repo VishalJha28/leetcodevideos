@@ -8,6 +8,7 @@ from dotenv import load_dotenv
 from PIL import Image, ImageDraw, ImageFont
 import ffmpeg
 import tempfile
+import pandas as pd
 
 load_dotenv()  # Load environment variables from .env file
 
