@@ -31,6 +31,7 @@ class LeetCodeVideoGenerator:
         )
         self.youtube_api_key = youtube_api_key
         self.leetcode_endpoint = "https://leetcode.com/graphql"
+        self.excel_path = "leetcode_shorts_log.xlsx"
 
     def fetch_easy_problems(self):
         query = """
